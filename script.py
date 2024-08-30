@@ -43,49 +43,73 @@ def search_github_for_code(token, repository_path, snippet_length, result_textbo
                 
                 if total_matches > 0:
                     copied_lines_count += snippet_length
-                    result_textbox.insert(ctk.END, f"\nMatch found in {file_path}:\n")
+                    result_textbox.insert(ctk.END, f"\nMatch found in {file_path}:\n", "match")
                     for item in search_results.get('items', []):
-                        result_textbox.insert(ctk.END, f"- {item['repository']['html_url']} ({item['path']})\n")
+                        result_textbox.insert(ctk.END, f"- {item['repository']['html_url']} ({item['path']})\n", "match")
                 else:
-                    result_textbox.insert(ctk.END, f"Match not found for snippet from {file_path}\n")
+                    result_textbox.insert(ctk.END, f"Match not found for snippet from {file_path}\n", "no_match")
             else:
-                result_textbox.insert(ctk.END, f"Error: {response.status_code} - {response.text}\n")
+                result_textbox.insert(ctk.END, f"Error: {response.status_code} - {response.text}\n", "error")
 
         total_copied_lines += copied_lines_count
 
     if total_copied_lines > 0:
-        result_textbox.insert(ctk.END, f"\nTotal copied lines found: {total_copied_lines}\n")
+        result_textbox.insert(ctk.END, f"\nTotal copied lines found: {total_copied_lines}\n", "match")
     else:
-        result_textbox.insert(ctk.END, "Match not found in any file.\n")
+        result_textbox.insert(ctk.END, "Match not found in any file.\n", "no_match")
 
 # Function to start the plagiarism check process
 def start_check():
-    token = token_entry.get().strip()
-    repo_path = repo_path_entry.get().strip()
-    snippet_length = int(snippet_length_entry.get().strip())
-    search_github_for_code(token, repo_path, snippet_length, result_textbox)
+    try:
+        token = token_entry.get().strip()
+        repo_path = repo_path_entry.get().strip()
+        snippet_length = int(snippet_length_entry.get().strip())
+        search_github_for_code(token, repo_path, snippet_length, result_textbox)
+    except ValueError:
+        result_textbox.insert(ctk.END, "Please enter a valid number for lines to check.\n", "error")
 
 # Creating the main GUI window
 app = ctk.CTk()
-app.geometry("600x600")
+app.geometry("700x700")
 app.title("AI-Based Plagiarism Detection")
 
-ctk.CTkLabel(app, text="GitHub Personal Access Token:").pack(pady=5)
-token_entry = ctk.CTkEntry(app, width=400)
+# Configure pastel theme colors
+ctk.set_appearance_mode("light")  # Options: "System" (default), "Dark", "Light"
+ctk.set_default_color_theme("blue")
+
+app.configure(bg="#e0f7fa")  # Pastel light cyan background
+
+# Styling for widgets
+label_font = ("Arial", 14)
+entry_font = ("Arial", 12)
+button_font = ("Arial", 14, "bold")
+result_textbox_font = ("Arial", 12)
+
+# Creating labels and entry fields
+token_label = ctk.CTkLabel(app, text="GitHub Personal Access Token:", font=label_font)
+token_label.pack(pady=5)
+token_entry = ctk.CTkEntry(app, width=400, font=entry_font)
 token_entry.pack()
 
-ctk.CTkLabel(app, text="Repository Path:").pack(pady=5)
-repo_path_entry = ctk.CTkEntry(app, width=400)
+repo_path_label = ctk.CTkLabel(app, text="Repository Path:", font=label_font)
+repo_path_label.pack(pady=5)
+repo_path_entry = ctk.CTkEntry(app, width=400, font=entry_font)
 repo_path_entry.pack()
 
-ctk.CTkLabel(app, text="Number of Lines to Check:").pack(pady=5)
-snippet_length_entry = ctk.CTkEntry(app, width=50)
+snippet_length_label = ctk.CTkLabel(app, text="Number of Lines to Check:", font=label_font)
+snippet_length_label.pack(pady=5)
+snippet_length_entry = ctk.CTkEntry(app, width=50, font=entry_font)
 snippet_length_entry.pack()
 
-check_button = ctk.CTkButton(app, text="Check for Plagiarism", command=start_check)
+check_button = ctk.CTkButton(app, text="Check for Plagiarism", font=button_font, command=start_check, fg_color="#80deea", hover_color="#4dd0e1")
 check_button.pack(pady=10)
 
-result_textbox = ctk.CTkTextbox(app, width=550, height=300)
+result_textbox = ctk.CTkTextbox(app, width=600, height=300, font=result_textbox_font)
 result_textbox.pack(pady=10)
+
+# Corrected tagging setup for the result text box
+result_textbox.tag_config("match", foreground="#388e3c")
+result_textbox.tag_config("no_match", foreground="#d32f2f")
+result_textbox.tag_config("error", foreground="#f57c00")
 
 app.mainloop()
